@@ -5,6 +5,5 @@
   "scripts": {
     "dev": "python app.py",
     "start": "gunicorn app:app"
-  },
-  "devDependencies": {}
+  }
 }

@@ -1,23 +1,16 @@
-# DEPLOY TO RAILWAY:
-# 1. Push project to GitHub
-# 2. railway.app -> New Project -> Deploy from GitHub
-# 3. Railway uses nixpacks.toml to install ffmpeg automatically
-# 4. Settings -> Networking -> Generate Domain
-# 5. Copy domain -> paste in index.html as API_BASE value
-# 6. Deploy index.html on netlify.com/drop (free, instant)
-
-import os
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify
 from flask_cors import CORS
+import os
 import yt_dlp
 from yt_dlp.utils import DownloadError
 
+# Vercel has a read-only filesystem — force yt-dlp cache to /tmp
+os.environ.setdefault('HOME', '/tmp')
+os.environ.setdefault('XDG_CACHE_HOME', '/tmp/.cache')
+os.environ.setdefault('YTDLP_CACHE_DIR', '/tmp/.cache/yt-dlp')
+
 app = Flask(__name__)
 CORS(app)
-
-@app.route('/')
-def serve_frontend():
-    return send_from_directory('.', 'index.html')
 
 def get_ydl_opts():
     return {
@@ -26,9 +19,11 @@ def get_ydl_opts():
         'nocheckcertificate': True,
         'quiet': True,
         'no_warnings': True,
+        'age_limit': None,
         'extractor_args': {
             'youtube': {
-                'player_client': ['tv_embedded', 'android'],
+                'player_client': ['web_creator', 'web', 'android', 'tv_embedded'],
+                'skip': ['dash', 'hls'],
             }
         },
         'http_headers': {
@@ -36,9 +31,12 @@ def get_ydl_opts():
             'Accept-Language': 'en-US,en;q=0.9',
             'Referer': 'https://www.google.com/',
         },
-        'retries': 5,
-        'fragment_retries': 5,
-        'socket_timeout': 30,
+        'retries': 10,
+        'fragment_retries': 10,
+        'socket_timeout': 60,
+        'extractor_retries': 5,
+        'sleep_interval': 1,
+        'max_sleep_interval': 5,
     }
 
 def detect_platform(url):
@@ -69,11 +67,11 @@ def parse_resolution(format_obj):
         return height * width
     return 0
 
-@app.route('/health')
+@app.route('/api/health')
 def health():
     return jsonify({"status": "running", "message": "VidSnap API is live"})
 
-@app.route('/info')
+@app.route('/api/info')
 def get_info():
     url = request.args.get('url', '')
     
@@ -112,7 +110,6 @@ def get_info():
             else:
                 resolution = 'N/A'
             
-            quality_label = f'{resolution}' if resolution != 'N/A' else 'N/A'
             filesize = f.get('filesize') or f.get('filesize_approx') or None
             
             filtered_formats.append({
@@ -143,7 +140,7 @@ def get_info():
         'formats': filtered_formats,
     })
 
-@app.route('/supported')
+@app.route('/api/supported')
 def get_supported():
     platforms = [
         {"name": "YouTube", "emoji": "\u25b6\ufe0f"},
@@ -162,7 +159,3 @@ def get_supported():
         {"name": "1000+ more", "emoji": "\U0001f310"},
     ]
     return jsonify({"platforms": platforms})
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)

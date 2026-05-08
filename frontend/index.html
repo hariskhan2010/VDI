@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VidSnap - Universal Video Downloader</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Inter:wght@400;500;600&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0a0a0a;
+  --surface: rgba(255,255,255,0.04);
+  --surface-hover: rgba(255,255,255,0.08);
+  --border: rgba(255,255,255,0.06);
+  --text: #ffffff;
+  --text-dim: rgba(255,255,255,0.5);
+  --accent: #00d4ff;
+  --accent-dim: rgba(0,212,255,0.15);
+  --radius: 16px;
+  --radius-sm: 10px;
+}
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+.container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 16px 60px;
+}
+
+/* Hero */
+.hero { text-align: center; padding: 40px 0 32px; }
+.hero h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(2.5rem, 8vw, 4rem);
+  font-weight: 800;
+  background: linear-gradient(135deg, #00d4ff 0%, #7b2ff7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.hero p {
+  color: var(--text-dim);
+  font-size: clamp(0.95rem, 2.5vw, 1.15rem);
+  margin-top: 10px;
+  font-weight: 400;
+}
+.hero .badge {
+  display: inline-block;
+  margin-top: 14px;
+  padding: 6px 18px;
+  border-radius: 100px;
+  background: var(--accent-dim);
+  border: 1px solid rgba(0,212,255,0.2);
+  font-size: 0.85rem;
+  color: var(--accent);
+  font-weight: 500;
+  animation: pulse-badge 2s ease-in-out infinite;
+}
+@keyframes pulse-badge {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.03); }
+}
+
+/* Platform Badges */
+.platform-bar {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 8px 0 24px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  white-space: nowrap;
+}
+.platform-bar::-webkit-scrollbar { display: none; }
+.platform-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: 100px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.platform-badge:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+.platform-badge .emoji { font-size: 1rem; }
+
+/* Card */
+.card {
+  background: var(--surface);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+/* Input */
+.input-group {
+  display: flex;
+  gap: 12px;
+  flex-direction: column;
+}
+.input-group input {
+  flex: 1;
+  padding: 14px 18px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.05);
+  color: var(--text);
+  font-size: 1rem;
+  font-family: 'Inter', sans-serif;
+  outline: none;
+  transition: border 0.25s, box-shadow 0.25s;
+  min-height: 48px;
+}
+.input-group input::placeholder { color: var(--text-dim); }
+.input-group input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0,212,255,0.15);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 28px;
+  border-radius: var(--radius-sm);
+  border: none;
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 48px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #0a0a0a;
+}
+.btn-primary:hover {
+  background: #33ddff;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 30px rgba(0,212,255,0.25);
+}
+.btn-primary:active { transform: translateY(0); }
+.btn-accent {
+  background: linear-gradient(135deg, #00d4ff, #7b2ff7);
+  color: #fff;
+}
+.btn-accent:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 30px rgba(0,212,255,0.3);
+}
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.btn-outline:hover {
+  background: var(--surface-hover);
+  border-color: var(--text-dim);
+}
+.btn-full { width: 100%; }
+
+.hint-text {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  margin-top: 10px;
+}
+
+/* Sections */
+.section { display: none; }
+.section.active { display: block; }
+
+/* Loading */
+.loading-content {
+  text-align: center;
+  padding: 10px 0;
+}
+.spinner {
+  width: 44px;
+  height: 44px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-content p {
+  color: var(--text-dim);
+  font-size: 0.95rem;
+}
+.detect-msg {
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: var(--accent);
+}
+
+/* Result */
+.result-layout {
+  display: flex;
+  gap: 20px;
+  flex-direction: column;
+}
+.result-thumb {
+  width: 100%;
+  aspect-ratio: 16/9;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+}
+.result-info { flex: 1; min-width: 0; }
+.result-platform {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 100px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.platform-color-YouTube { background: rgba(255,0,0,0.2); color: #ff4444; }
+.platform-color-Facebook { background: rgba(24,119,242,0.2); color: #1877f2; }
+.platform-color-Instagram { background: rgba(225,48,108,0.2); color: #e1306c; }
+.platform-color-TikTok { background: rgba(0,0,0,0.3); color: #fff; }
+.platform-color-Twitter { background: rgba(29,161,242,0.2); color: #1da1f2; }
+.platform-color-Vimeo { background: rgba(26,183,234,0.2); color: #1ab7ea; }
+.platform-color-Dailymotion { background: rgba(0,173,239,0.2); color: #00adef; }
+.platform-color-Reddit { background: rgba(255,86,0,0.2); color: #ff5600; }
+.platform-color-Twitch { background: rgba(145,70,255,0.2); color: #9146ff; }
+.platform-color-Pinterest { background: rgba(230,0,35,0.2); color: #e60023; }
+.platform-color-LinkedIn { background: rgba(0,119,181,0.2); color: #0077b5; }
+.platform-color-Bilibili { background: rgba(0,161,214,0.2); color: #00a1d6; }
+.platform-color-Snapchat { background: rgba(255,252,0,0.2); color: #fffc00; }
+.platform-color-Unknown { background: rgba(255,255,255,0.1); color: var(--text-dim); }
+
+.result-title {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(1rem, 3vw, 1.2rem);
+  font-weight: 700;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+.result-uploader {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  margin-bottom: 2px;
+}
+.result-duration {
+  color: var(--text-dim);
+  font-size: 0.82rem;
+  margin-bottom: 16px;
+}
+
+.quality-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+.quality-group label {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+.quality-select {
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.05);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  outline: none;
+  cursor: pointer;
+  min-height: 48px;
+}
+.quality-select:focus { border-color: var(--accent); }
+
+.btn-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.dl-note {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-top: 8px;
+}
+
+/* Error */
+.error-content { text-align: center; padding: 10px 0; }
+.error-icon {
+  font-size: 3rem;
+  margin-bottom: 12px;
+}
+.error-content h3 {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.2rem;
+  margin-bottom: 6px;
+}
+.error-content p {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  margin-bottom: 18px;
+  word-break: break-word;
+}
+
+/* How it works */
+.how-section { text-align: center; }
+.how-section h2 {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.3rem;
+  margin-bottom: 20px;
+}
+.steps {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.step {
+  flex: 1;
+  min-width: 130px;
+  max-width: 200px;
+  padding: 20px 12px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.step-icon {
+  font-size: 2rem;
+  margin-bottom: 8px;
+}
+.step h4 {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+.step p {
+  color: var(--text-dim);
+  font-size: 0.8rem;
+}
+
+/* Footer */
+footer {
+  text-align: center;
+  padding: 40px 0 20px;
+  color: var(--text-dim);
+  font-size: 0.78rem;
+}
+footer a { color: var(--accent); text-decoration: none; }
+
+/* Desktop */
+@media (min-width: 600px) {
+  .container { padding: 40px 24px 60px; }
+  .input-group { flex-direction: row; }
+  .input-group input { font-size: 1.05rem; }
+  .btn { width: auto; }
+  .btn-full-desktop { width: 100%; }
+  .result-layout { flex-direction: row; }
+  .result-thumb { width: 200px; aspect-ratio: auto; height: 140px; flex-shrink: 0; }
+  .btn-group { flex-direction: row; }
+  .btn-group .btn { flex: 1; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Hero -->
+  <header class="hero">
+    <h1>VidSnap</h1>
+    <p>Download videos from 1000+ platforms instantly</p>
+    <div class="badge">🌐 Universal Downloader</div>
+  </header>
+
+  <!-- Platform Badges -->
+  <div class="platform-bar" id="platformBar"></div>
+
+  <!-- Download Card -->
+  <div class="card">
+    <div class="input-group">
+      <input type="url" id="urlInput" placeholder="Paste any video URL — YouTube, TikTok, Instagram, Twitter..." autocomplete="off" spellcheck="false">
+      <button class="btn btn-primary" id="downloadBtn">⬇ Download</button>
+    </div>
+    <p class="hint-text">Supports 1000+ platforms including YouTube, TikTok, Instagram, Facebook &amp; more</p>
+  </div>
+
+  <!-- Loading -->
+  <div class="card section" id="loadingSection">
+    <div class="loading-content">
+      <div class="spinner"></div>
+      <p>Fetching video info...</p>
+      <p class="detect-msg" id="detectMsg"></p>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div class="card section" id="resultSection">
+    <div class="result-layout">
+      <img class="result-thumb" id="resultThumb" alt="Video thumbnail">
+      <div class="result-info">
+        <span class="result-platform" id="resultPlatformBadge"></span>
+        <h3 class="result-title" id="resultTitle"></h3>
+        <p class="result-uploader" id="resultUploader"></p>
+        <p class="result-duration" id="resultDuration"></p>
+        <div class="quality-group">
+          <label for="qualitySelect">Quality</label>
+          <select class="quality-select" id="qualitySelect"></select>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-accent" id="bestQualityBtn">⬇ Best Quality</button>
+          <button class="btn btn-outline" id="selectedQualityBtn">⬇ Download Selected</button>
+        </div>
+        <p class="dl-note">Opens in new tab — use Save As to download</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div class="card section" id="errorSection">
+    <div class="error-content">
+      <div class="error-icon">⚠️</div>
+      <h3>Download Failed</h3>
+      <p id="errorMessage"></p>
+      <button class="btn btn-outline" id="tryAgainBtn">Try Another URL</button>
+    </div>
+  </div>
+
+  <!-- How It Works -->
+  <section class="how-section">
+    <h2>How It Works</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-icon">🔗</div>
+        <h4>Paste URL</h4>
+        <p>Copy any video link and paste it above</p>
+      </div>
+      <div class="step">
+        <div class="step-icon">⚡</div>
+        <h4>Fetch Info</h4>
+        <p>We extract all available formats instantly</p>
+      </div>
+      <div class="step">
+        <div class="step-icon">💾</div>
+        <h4>Download</h4>
+        <p>Choose quality and save the video</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    VidSnap &bull; Public videos only &bull; Powered by yt-dlp
+  </footer>
+
+</div>
+
+<script>
+const API_BASE = "YOUR_RAILWAY_URL";
+
+const PLATFORM_DOMAINS = {
+  'YouTube': ['youtube.com', 'youtu.be'],
+  'Facebook': ['facebook.com', 'fb.watch'],
+  'Instagram': ['instagram.com'],
+  'TikTok': ['tiktok.com', 'vm.tiktok.com'],
+  'Twitter': ['twitter.com', 'x.com', 't.co'],
+  'Vimeo': ['vimeo.com'],
+  'Dailymotion': ['dailymotion.com', 'dai.ly'],
+  'Reddit': ['reddit.com', 'v.redd.it'],
+  'Twitch': ['twitch.tv', 'clips.twitch.tv'],
+  'LinkedIn': ['linkedin.com'],
+  'Pinterest': ['pinterest.com', 'pin.it'],
+  'Snapchat': ['snapchat.com'],
+  'Bilibili': ['bilibili.com', 'b23.tv'],
+};
+
+function detectPlatform(url) {
+  for (const [platform, domains] of Object.entries(PLATFORM_DOMAINS)) {
+    if (domains.some(d => url.includes(d))) return platform === 'Twitter' ? 'Twitter/X' : platform;
+  }
+  return 'Unknown';
+}
+
+function formatDuration(seconds) {
+  if (!seconds || seconds <= 0) return 'Unknown';
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  return `${m}:${String(s).padStart(2,'0')}`;
+}
+
+function formatFilesize(bytes) {
+  if (!bytes) return 'Unknown size';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let i = 0;
+  let size = bytes;
+  while (size >= 1024 && i < units.length - 1) { size /= 1024; i++; }
+  return `${size.toFixed(1)} ${units[i]}`;
+}
+
+function validateUrl(url) {
+  return url.startsWith('http://') || url.startsWith('https://');
+}
+
+function showSection(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(name + 'Section');
+  if (el) el.classList.add('active');
+}
+
+function populateFormats(formats) {
+  const sel = document.getElementById('qualitySelect');
+  sel.innerHTML = '';
+  if (!formats || formats.length === 0) {
+    const opt = document.createElement('option');
+    opt.textContent = 'No formats available';
+    sel.appendChild(opt);
+    return;
+  }
+  formats.forEach(f => {
+    const opt = document.createElement('option');
+    opt.value = f.url;
+    const qual = f.resolution && f.resolution !== 'N/A' ? f.resolution : f.quality;
+    opt.textContent = `${qual} (${f.ext}) — ${formatFilesize(f.filesize)}`;
+    sel.appendChild(opt);
+  });
+}
+
+async function fetchVideoInfo(url) {
+  const detectMsg = document.getElementById('detectMsg');
+  const platform = detectPlatform(url);
+  detectMsg.textContent = `Detected: ${platform} ✓`;
+
+  showSection('loading');
+
+  const response = await fetch(`${API_BASE}/info?url=${encodeURIComponent(url)}`);
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to fetch video info');
+  }
+
+  return data;
+}
+
+// Platform badges
+async function loadPlatforms() {
+  try {
+    const res = await fetch(`${API_BASE}/supported`);
+    const data = await res.json();
+    const bar = document.getElementById('platformBar');
+    bar.innerHTML = '';
+    data.platforms.forEach(p => {
+      const badge = document.createElement('span');
+      badge.className = 'platform-badge';
+      badge.innerHTML = `<span class="emoji">${p.emoji}</span> ${p.name}`;
+      bar.appendChild(badge);
+    });
+  } catch {}
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadPlatforms();
+});
+
+// Download flow
+document.getElementById('downloadBtn').addEventListener('click', async () => {
+  const url = document.getElementById('urlInput').value.trim();
+  if (!url) { document.getElementById('urlInput').focus(); return; }
+  if (!validateUrl(url)) {
+    document.getElementById('errorMessage').textContent = 'Please enter a valid URL starting with http:// or https://';
+    showSection('error');
+    return;
+  }
+
+  try {
+    const info = await fetchVideoInfo(url);
+    showResult(info);
+  } catch (err) {
+    document.getElementById('errorMessage').textContent = err.message;
+    showSection('error');
+  }
+});
+
+document.getElementById('urlInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('downloadBtn').click();
+});
+
+function showResult(info) {
+  document.getElementById('resultTitle').textContent = info.title;
+  document.getElementById('resultUploader').textContent = info.uploader;
+  document.getElementById('resultDuration').textContent = formatDuration(info.duration);
+
+  const platform = info.platform || 'Unknown';
+  const badge = document.getElementById('resultPlatformBadge');
+  badge.textContent = platform;
+  badge.className = 'result-platform platform-color-' + platform.replace(/[^a-zA-Z]/g, '');
+
+  const thumb = document.getElementById('resultThumb');
+  if (info.thumbnail) {
+    thumb.src = info.thumbnail;
+    thumb.onerror = () => { thumb.style.background = 'linear-gradient(135deg, #1a1a2e, #16213e)'; thumb.src = ''; };
+  } else {
+    thumb.style.background = 'linear-gradient(135deg, #1a1a2e, #16213e)';
+  }
+
+  populateFormats(info.formats);
+
+  const bestBtn = document.getElementById('bestQualityBtn');
+  const selBtn = document.getElementById('selectedQualityBtn');
+
+  if (info.best_url) {
+    bestBtn.onclick = () => window.open(info.best_url, '_blank', 'noopener');
+    bestBtn.style.display = 'flex';
+  } else {
+    bestBtn.style.display = 'none';
+  }
+
+  selBtn.onclick = () => {
+    const sel = document.getElementById('qualitySelect');
+    const url = sel.value;
+    if (url && url.startsWith('http')) window.open(url, '_blank', 'noopener');
+  };
+
+  showSection('result');
+}
+
+document.getElementById('tryAgainBtn').addEventListener('click', () => {
+  showSection('loading');
+  document.getElementById('urlInput').focus();
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+});
+</script>
+</body>
+</html>

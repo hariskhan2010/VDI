@@ -7,15 +7,19 @@
 # 6. Deploy index.html on netlify.com/drop (free, instant)
 
 import os
-import re
-import json
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import yt_dlp
 from yt_dlp.utils import DownloadError
 
 app = Flask(__name__)
 CORS(app)
+
+FRONTEND_DIR = os.path.join(os.path.dirname(__file__), 'frontend')
+
+@app.route('/')
+def serve_frontend():
+    return send_from_directory(FRONTEND_DIR, 'index.html')
 
 def get_ydl_opts():
     return {
@@ -67,8 +71,8 @@ def parse_resolution(format_obj):
         return height * width
     return 0
 
-@app.route('/')
-def index():
+@app.route('/health')
+def health():
     return jsonify({"status": "running", "message": "VidSnap API is live"})
 
 @app.route('/info')

@@ -3,12 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently -n backend,frontend -c blue,green \"python app.py\" \"npx serve frontend -l 3000 --no-clipboard\"",
-    "dev:backend": "python app.py",
-    "dev:frontend": "npx serve frontend -l 3000 --no-clipboard"
+    "dev": "python app.py",
+    "start": "gunicorn app:app"
   },
-  "devDependencies": {
-    "concurrently": "^9.1.0",
-    "serve": "^14.2.0"
-  }
+  "devDependencies": {}
 }
